@@ -63,8 +63,6 @@ func main() {
 	rss.LastUpdateTime = posts[0].PubDate
 
 	for _, post := range posts {
-		log.Printf("%s at %s", post.Title, post.PubDate)
-
 		rss.Items = append(rss.Items, gorselib.RSSItem{
 			Title:           post.Title,
 			URI:             post.URI,
