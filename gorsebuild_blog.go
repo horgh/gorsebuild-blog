@@ -14,6 +14,7 @@ import (
 	"path"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"summercat.com/gorse/gorselib"
@@ -217,7 +218,8 @@ func getPost(path, name string) (Post, error) {
 		}
 	}
 
-	uri := fmt.Sprintf("%s/%s.html", URI, name)
+	// Filename is x.md. URI should be x.html.
+	uri := fmt.Sprintf("%s/%s.html", URI, strings.TrimSuffix(name, ".md"))
 
 	return Post{
 		Title:       title,
