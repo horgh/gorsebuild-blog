@@ -42,16 +42,24 @@ func main() {
 	log.SetFlags(0)
 	gorselib.SetQuiet(true)
 
-	outputFile := flag.String("output-file", "", "Output XML file to write.")
+	outputFile := flag.String("output-file", "rss.xml", "Output XML file to write.")
+	pagesDir := flag.String("pages-dir", "pages", "Directory containing pages.")
 
 	flag.Parse()
 
 	if len(*outputFile) == 0 {
+		log.Printf("You must provide an output file.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	posts, err := getPosts()
+	if len(*pagesDir) == 0 {
+		log.Printf("You must provide a pages directory.")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	posts, err := getPosts(*pagesDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,22 +85,27 @@ func main() {
 
 	err = gorselib.WriteFeedXML(&rss, *outputFile)
 	if err != nil {
-		log.Printf("Failed to write XML: %s", err.Error())
-		os.Exit(1)
+		log.Fatalf("Failed to write XML: %s", err)
 	}
 }
 
 // Return posts reverse chronologically.
-func getPosts() ([]Post, error) {
-	dh, err := os.Open("pages")
+func getPosts(dir string) ([]Post, error) {
+	dh, err := os.Open(dir)
 	if err != nil {
 		return nil, err
 	}
 
+	defer func() {
+		err := dh.Close()
+		if err != nil {
+			log.Printf("close: %s: %s", dir, err)
+		}
+	}()
+
 	fis, err := dh.Readdir(0)
 	if err != nil {
-		_ = dh.Close()
-		return nil, fmt.Errorf("Readdir: %s", err)
+		return nil, fmt.Errorf("readdir: %s", err)
 	}
 
 	posts := []Post{}
@@ -108,20 +121,14 @@ func getPosts() ([]Post, error) {
 		}
 
 		// Should only have regular files.
-		postPath := path.Join("pages", fi.Name())
+		postPath := path.Join(dir, fi.Name())
 
 		post, err := getPost(postPath, fi.Name())
 		if err != nil {
-			_ = dh.Close()
-			return nil, fmt.Errorf("Unable to retrieve post: %s: %s", fi.Name(), err)
+			return nil, fmt.Errorf("unable to retrieve post: %s: %s", fi.Name(), err)
 		}
 
 		posts = append(posts, post)
-	}
-
-	err = dh.Close()
-	if err != nil {
-		return nil, fmt.Errorf("Close: %s", err)
 	}
 
 	sort.Sort(ByPubDate(posts))
@@ -135,28 +142,39 @@ func getPost(path, name string) (Post, error) {
 		return Post{}, err
 	}
 
+	defer func() {
+		err := fh.Close()
+		if err != nil {
+			log.Printf("close: %s: %s", name, err)
+		}
+	}()
+
+	// Read page for title and meta information.
+
 	scanner := bufio.NewScanner(fh)
 
-	post := Post{}
-
+	metaRe := regexp.MustCompile("^META (\\S+) (.*)$")
 	metadata := map[string]string{}
 	metaName := ""
 	metaValue := ""
 
+	titleRe := regexp.MustCompile("^# (.+)$")
+	title := ""
+
 	for scanner.Scan() {
-		metaRe := regexp.MustCompile("^META (\\S+) (.*)$")
+		// New META begins.
 		matches := metaRe.FindStringSubmatch(scanner.Text())
 		if matches != nil {
 			if len(metaName) > 0 {
 				metadata[metaName] = metaValue
-				metaName = ""
-				metaValue = ""
 			}
 			metaName = matches[1]
 			metaValue = matches[2]
 			continue
 		}
 
+		// If we're in a meta, then we end at a blank line, or append a line to the
+		// meta's value.
 		if len(metaName) > 0 {
 			if len(scanner.Text()) == 0 {
 				metadata[metaName] = metaValue
@@ -168,50 +186,43 @@ func getPost(path, name string) (Post, error) {
 			continue
 		}
 
-		titleRe := regexp.MustCompile("^# (.+)$")
+		// Title.
 		matches = titleRe.FindStringSubmatch(scanner.Text())
 		if matches != nil {
-			post.Title = matches[1]
+			title = matches[1]
 		}
 	}
 
 	if scanner.Err() != nil {
-		_ = fh.Close()
-		return Post{}, fmt.Errorf("Scanner: %s", scanner.Err())
+		return Post{}, fmt.Errorf("scanner: %s", scanner.Err())
 	}
 
-	err = fh.Close()
+	// We must always have a title, description, and publication date.
+
+	if len(title) == 0 {
+		return Post{}, fmt.Errorf("no title found")
+	}
+
+	if len(metadata["description"]) == 0 {
+		return Post{}, fmt.Errorf("no description found")
+	}
+
+	pubDate, err := time.ParseInLocation("2006-01-02", metadata["pubdate"],
+		time.Local)
 	if err != nil {
-		return Post{}, fmt.Errorf("Close: %s", err)
-	}
-
-	desc, ok := metadata["description"]
-	if !ok {
-		return Post{}, fmt.Errorf("No description found")
-	}
-	post.Description = desc
-
-	dateRaw, ok := metadata["pubdate"]
-	if !ok {
-		return Post{}, fmt.Errorf("No pub date found")
-	}
-
-	locn, err := time.LoadLocation("America/Vancouver")
-	if err != nil {
-		return Post{}, err
-	}
-
-	pubdate, err := time.ParseInLocation("2006-01-02", dateRaw, locn)
-	if err != nil {
-		pubdate, err = time.ParseInLocation("2006-01-02 15:04:05", dateRaw, locn)
+		pubDate, err = time.ParseInLocation("2006-01-02 15:04:05",
+			metadata["pubdate"], time.Local)
 		if err != nil {
 			return Post{}, err
 		}
 	}
 
-	post.PubDate = pubdate
+	uri := fmt.Sprintf("%s/%s.html", URI, name)
 
-	post.URI = fmt.Sprintf("%s/%s.html", URI, name)
-
-	return post, nil
+	return Post{
+		Title:       title,
+		Description: metadata["description"],
+		PubDate:     pubDate,
+		URI:         uri,
+	}, nil
 }
