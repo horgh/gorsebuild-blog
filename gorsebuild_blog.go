@@ -16,7 +16,7 @@ import (
 	"sort"
 	"time"
 
-	"summercat.com/gorse/gorselib"
+	"github.com/horgh/gorse/gorselib"
 )
 
 // URI is the url to the blog root.
