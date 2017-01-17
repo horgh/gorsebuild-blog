@@ -31,8 +31,7 @@ type Post struct {
 	URI         string
 }
 
-// ByPubDate implements sort.Interface
-// Reverse chronologically.
+// ByPubDate implements sort.Interface Reverse chronologically.
 type ByPubDate []Post
 
 func (p ByPubDate) Len() int           { return len(p) }
@@ -65,18 +64,19 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rss := gorselib.RSSFeed{}
-	rss.Name = "The one and the many"
-	rss.URI = URI
-	rss.Description = "A personal blog with articles discussing programming, GNU/Linux, technology, and other interests."
-	rss.LastUpdateTime = posts[0].PubDate
+	rss := gorselib.Feed{
+		Title:       "The one and the many",
+		Link:        URI,
+		Description: "A personal blog with articles discussing programming, GNU/Linux, technology, and other interests.",
+		PubDate:     posts[0].PubDate,
+	}
 
 	for _, post := range posts {
-		rss.Items = append(rss.Items, gorselib.RSSItem{
-			Title:           post.Title,
-			URI:             post.URI,
-			Description:     post.Description,
-			PublicationDate: post.PubDate,
+		rss.Items = append(rss.Items, gorselib.Item{
+			Title:       post.Title,
+			Link:        post.URI,
+			Description: post.Description,
+			PubDate:     post.PubDate,
 		})
 	}
 
@@ -84,7 +84,7 @@ func main() {
 		rss.Items = rss.Items[0:10]
 	}
 
-	err = gorselib.WriteFeedXML(&rss, *outputFile)
+	err = gorselib.WriteFeedXML(rss, *outputFile)
 	if err != nil {
 		log.Fatalf("Failed to write XML: %s", err)
 	}
