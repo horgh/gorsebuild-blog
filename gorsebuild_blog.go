@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/horgh/gorse/gorselib"
+	"github.com/horgh/rss"
 )
 
 // URI is the url to the blog root.
@@ -40,7 +40,6 @@ func (p ByPubDate) Less(i, j int) bool { return p[j].PubDate.Before(p[i].PubDate
 
 func main() {
 	log.SetFlags(0)
-	gorselib.SetQuiet(true)
 
 	outputFile := flag.String("output-file", "rss.xml", "Output XML file to write.")
 	pagesDir := flag.String("pages-dir", "pages", "Directory containing pages.")
@@ -64,7 +63,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rss := gorselib.Feed{
+	feed := rss.Feed{
 		Title:       "The one and the many",
 		Link:        URI,
 		Description: "A personal blog with articles discussing programming, GNU/Linux, technology, and other interests.",
@@ -72,7 +71,7 @@ func main() {
 	}
 
 	for _, post := range posts {
-		rss.Items = append(rss.Items, gorselib.Item{
+		feed.Items = append(feed.Items, rss.Item{
 			Title:       post.Title,
 			Link:        post.URI,
 			Description: post.Description,
@@ -80,11 +79,11 @@ func main() {
 		})
 	}
 
-	if len(rss.Items) > 10 {
-		rss.Items = rss.Items[0:10]
+	if len(feed.Items) > 10 {
+		feed.Items = feed.Items[0:10]
 	}
 
-	err = gorselib.WriteFeedXML(rss, *outputFile)
+	err = rss.WriteFeedXML(feed, *outputFile)
 	if err != nil {
 		log.Fatalf("Failed to write XML: %s", err)
 	}
