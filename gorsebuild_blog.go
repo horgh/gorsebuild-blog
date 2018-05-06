@@ -1,8 +1,6 @@
-//
 // Generate an RSS feed for my blog.
 //
 // I get the posts and info about them by examining markdown files.
-//
 package main
 
 import (
@@ -64,7 +62,7 @@ func main() {
 	}
 
 	feed := rss.Feed{
-		Title:       "The one and the many",
+		Title:       "The One and the Many",
 		Link:        URI,
 		Description: "A personal blog with articles discussing programming, GNU/Linux, technology, and other interests.",
 		PubDate:     posts[0].PubDate,
