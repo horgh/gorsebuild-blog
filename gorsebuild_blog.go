@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/horgh/rss"
+	"github.com/pkg/errors"
 )
 
 // URI is the url to the blog root.
@@ -141,9 +142,8 @@ func getPost(path, name string) (Post, error) {
 	}
 
 	defer func() {
-		err := fh.Close()
-		if err != nil {
-			log.Printf("close: %s: %s", name, err)
+		if err := fh.Close(); err != nil {
+			log.Fatalf("%+v", errors.Wrap(err, "error closing file"))
 		}
 	}()
 
