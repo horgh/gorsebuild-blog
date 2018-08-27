@@ -175,6 +175,9 @@ func parsePost(
 			}
 			metaName = matches[1]
 			metaValue = matches[2]
+			if _, ok := metadata[metaName]; ok {
+				return Post{}, errors.Errorf("found duplicate metadata: %s", metaName)
+			}
 			continue
 		}
 
