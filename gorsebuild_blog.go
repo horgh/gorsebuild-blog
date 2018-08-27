@@ -194,10 +194,11 @@ func parsePost(
 			continue
 		}
 
-		// Title.
-		matches = titleRE.FindStringSubmatch(scanner.Text())
-		if matches != nil {
-			title = matches[1]
+		if title == "" {
+			matches := titleRE.FindStringSubmatch(scanner.Text())
+			if matches != nil {
+				title = matches[1]
+			}
 		}
 	}
 
