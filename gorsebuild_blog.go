@@ -1,6 +1,6 @@
 // Generate an RSS feed for my blog.
 //
-// I get the posts and info about them by examining markdown files.
+// I get the posts and info about them by examining Markdown files.
 package main
 
 import (
