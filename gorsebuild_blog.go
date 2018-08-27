@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
@@ -147,9 +148,16 @@ func getPost(path, name string) (Post, error) {
 		}
 	}()
 
+	return parsePost(name, fh)
+}
+
+func parsePost(
+	name string,
+	reader io.Reader,
+) (Post, error) {
 	// Read page for title and meta information.
 
-	scanner := bufio.NewScanner(fh)
+	scanner := bufio.NewScanner(reader)
 
 	metaRE := regexp.MustCompile("^META (\\S+) (.*)$")
 	metadata := map[string]string{}
