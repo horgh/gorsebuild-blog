@@ -190,8 +190,8 @@ func getPost(path, name string) (Post, error) {
 		}
 	}
 
-	if scanner.Err() != nil {
-		return Post{}, fmt.Errorf("scanner: %s", scanner.Err())
+	if err := scanner.Err(); err != nil {
+		return Post{}, errors.Wrap(err, "error scanning")
 	}
 
 	// We must always have a title, description, and publication date.
