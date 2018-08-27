@@ -79,8 +79,8 @@ func main() {
 		})
 	}
 
-	if len(feed.Items) > 10 {
-		feed.Items = feed.Items[0:10]
+	if len(feed.Items) > 5 {
+		feed.Items = feed.Items[:5]
 	}
 
 	err = rss.WriteFeedXML(feed, *outputFile)
