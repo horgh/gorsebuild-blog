@@ -151,17 +151,16 @@ func getPost(path, name string) (Post, error) {
 
 	scanner := bufio.NewScanner(fh)
 
-	metaRe := regexp.MustCompile("^META (\\S+) (.*)$")
+	metaRE := regexp.MustCompile("^META (\\S+) (.*)$")
 	metadata := map[string]string{}
-	metaName := ""
-	metaValue := ""
+	var metaName, metaValue string
 
-	titleRe := regexp.MustCompile("^# (.+)$")
-	title := ""
+	titleRE := regexp.MustCompile("^# (.+)$")
+	var title string
 
 	for scanner.Scan() {
 		// New META begins.
-		matches := metaRe.FindStringSubmatch(scanner.Text())
+		matches := metaRE.FindStringSubmatch(scanner.Text())
 		if matches != nil {
 			if len(metaName) > 0 {
 				metadata[metaName] = metaValue
@@ -185,7 +184,7 @@ func getPost(path, name string) (Post, error) {
 		}
 
 		// Title.
-		matches = titleRe.FindStringSubmatch(scanner.Text())
+		matches = titleRE.FindStringSubmatch(scanner.Text())
 		if matches != nil {
 			title = matches[1]
 		}
