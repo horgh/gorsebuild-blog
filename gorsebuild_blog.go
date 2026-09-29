@@ -66,7 +66,7 @@ func main() {
 	feed := rss.Feed{
 		Title:       "The One and the Many",
 		Link:        URI,
-		Description: "A personal blog with articles discussing programming, GNU/Linux, technology, and other interests.",
+		Description: "A blog about programming, technology, and other interests.",
 		PubDate:     posts[0].PubDate,
 	}
 
