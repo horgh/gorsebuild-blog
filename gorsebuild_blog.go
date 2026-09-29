@@ -29,6 +29,8 @@ type Post struct {
 	Description string
 	PubDate     time.Time
 	URI         string
+	// Type is the page type: article or website.
+	Type string
 }
 
 // ByPubDate implements sort.Interface Reverse chronologically.
@@ -126,6 +128,11 @@ func getPosts(dir string) ([]Post, error) {
 		post, err := getPost(postPath, fi.Name())
 		if err != nil {
 			return nil, fmt.Errorf("unable to retrieve post: %s: %s", fi.Name(), err)
+		}
+
+		// Only articles go in the feed.
+		if post.Type != "article" {
+			continue
 		}
 
 		posts = append(posts, post)
@@ -226,6 +233,14 @@ func parsePost(
 		}
 	}
 
+	pageType := metadata["page-type"]
+	if pageType == "" {
+		pageType = "article"
+	}
+	if pageType != "article" && pageType != "website" {
+		return Post{}, fmt.Errorf("invalid page-type: %s", pageType)
+	}
+
 	// Filename is x.md. URI should be x.html.
 	uri := fmt.Sprintf("%s/%s.html", URI, strings.TrimSuffix(name, ".md"))
 
@@ -234,5 +249,6 @@ func parsePost(
 		Description: metadata["description"],
 		PubDate:     pubDate,
 		URI:         uri,
+		Type:        pageType,
 	}, nil
 }

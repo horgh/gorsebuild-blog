@@ -46,7 +46,34 @@ use Data::Dumper qw( Dumper );
 					require.NoError(t, err)
 					return d
 				}(),
-				URI: "https://blog.summercat.com/perl-and-character-encoding.html",
+				URI:  "https://blog.summercat.com/perl-and-character-encoding.html",
+				Type: "article",
+			},
+		},
+		{
+			"404.md",
+			`# Page not found
+
+META description The requested page does not exist.
+META pubdate 2026-09-28
+META page-type website
+
+The page you asked for is not here.
+`,
+			Post{
+				Title:       "Page not found",
+				Description: "The requested page does not exist.",
+				PubDate: func() time.Time {
+					d, err := time.ParseInLocation(
+						"2006-01-02",
+						"2026-09-28",
+						time.Local,
+					)
+					require.NoError(t, err)
+					return d
+				}(),
+				URI:  "https://blog.summercat.com/404.html",
+				Type: "website",
 			},
 		},
 	}
